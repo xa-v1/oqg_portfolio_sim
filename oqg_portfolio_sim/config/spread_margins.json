@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "_comment": "Approximate CFE spread margin between adjacent-rank VIX futures legs, from the rank-butterfly notebook. Margin is explicitly approximate -- see PROJECT_SPEC.md.",
+    "spread_margins": [
+        {
+            "near": "VX2",
+            "far": "VX3",
+            "margin": 2170.0
+        },
+        {
+            "near": "VX3",
+            "far": "VX4",
+            "margin": 1220.0
+        }
+    ]
+}

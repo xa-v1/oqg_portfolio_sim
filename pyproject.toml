@@ -1,0 +1,9 @@
+[project]
+name = "oqg-portfolio-sim"
+version = "0.1.0"
+description = "Phase 1 skeleton for the quant club simulator"
+requires-python = ">=3.11"
+
+[project.scripts]
+oqg-portfolio-sim = "oqg_portfolio_sim.cli:main"
+oqg-daily-run = "oqg_portfolio_sim.runner.__main__:main"

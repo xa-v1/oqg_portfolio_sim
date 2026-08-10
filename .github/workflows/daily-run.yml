@@ -1,0 +1,56 @@
+name: Daily Simulation Run
+
+on:
+  schedule:
+    # 21:30 UTC ~= 4:30pm ET, after the 4:00pm ET CFE/equity close, leaving
+    # time for Cboe settlement data to post. Does not itself account for
+    # market holidays -- the runner's own market-calendar check (CFE
+    # calendar) handles that and exits cleanly (not an error) on non-trading
+    # days. Note: the UTC offset for 4:30pm ET drifts by an hour across the
+    # US DST transition; this cron is tuned for EDT (summer) and will fire
+    # ~1 hour early relative to market close during EST (winter) months --
+    # still after close, just with a bit more settlement-posting buffer.
+    - cron: "30 21 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-simulation-run
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily simulation cycle
+        run: python -m oqg_portfolio_sim.runner --db ledger.sqlite
+
+      - name: Commit ledger
+        # Runs even if the step above failed: PROJECT_SPEC.md requires that
+        # a failed run still gets recorded (status='error') and committed,
+        # not silently dropped, so gaps/failures are visible in the public
+        # track record rather than just in CI logs.
+        if: always()
+        run: |
+          git config user.name "oqg-simulator-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ledger.sqlite
+          if git diff --cached --quiet; then
+            echo "No ledger changes to commit"
+          else
+            git commit -m "Daily simulation run: $(date -u +%Y-%m-%d)"
+            git push
+          fi

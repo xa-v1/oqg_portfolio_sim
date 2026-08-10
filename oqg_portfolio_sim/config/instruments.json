@@ -1,0 +1,65 @@
+{
+    "version": 1,
+    "instruments": [
+        {
+            "instrument_id": "VX1",
+            "name": "CFE VIX front-month future",
+            "asset_class": "futures",
+            "multiplier": 1000,
+            "tick_size": 0.01,
+            "explicit_fee": 2.58,
+            "spread": 0.1,
+            "liquidity": "normal",
+            "margin_requirement": null,
+            "fill_policy": "next_session_settle"
+        },
+        {
+            "instrument_id": "VX2",
+            "name": "CFE VIX 2nd-rank future (M2)",
+            "asset_class": "futures",
+            "multiplier": 1000,
+            "tick_size": 0.01,
+            "explicit_fee": 2.58,
+            "spread": 0.1,
+            "liquidity": "normal",
+            "margin_requirement": null,
+            "fill_policy": "next_session_settle"
+        },
+        {
+            "instrument_id": "VX3",
+            "name": "CFE VIX 3rd-rank future (M3)",
+            "asset_class": "futures",
+            "multiplier": 1000,
+            "tick_size": 0.01,
+            "explicit_fee": 2.58,
+            "spread": 0.1,
+            "liquidity": "normal",
+            "margin_requirement": null,
+            "fill_policy": "next_session_settle"
+        },
+        {
+            "instrument_id": "VX4",
+            "name": "CFE VIX 4th-rank future (M4)",
+            "asset_class": "futures",
+            "multiplier": 1000,
+            "tick_size": 0.01,
+            "explicit_fee": 2.58,
+            "spread": 0.1,
+            "liquidity": "illiquid",
+            "margin_requirement": null,
+            "fill_policy": "next_session_settle"
+        },
+        {
+            "instrument_id": "SPY",
+            "name": "SPDR S&P 500 ETF Trust",
+            "asset_class": "equity",
+            "multiplier": 1,
+            "tick_size": 0.01,
+            "explicit_fee": 0.0,
+            "spread": 0.01,
+            "liquidity": "normal",
+            "margin_requirement": null,
+            "fill_policy": "next_session_close"
+        }
+    ]
+}
