@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-08-17T21:46:19+00:00",
+  "strategies": [
+    {
+      "strategy_id": "rank_butterfly_234",
+      "name": "VIX Rank Butterfly (M2-M3-M4, plain 1-2-1)",
+      "description": "Constant-rank VIX futures butterfly, ported from rank_butterflies.ipynb: z-score mean reversion on mid - 0.5*(near+far) across ranked VIX expiries.",
+      "asset_class": "futures",
+      "active": true,
+      "capital_base": 100000.0,
+      "cum_net_pnl": 0.0,
+      "net_return_pct": 0.0,
+      "last_date": "2026-08-17"
+    }
+  ],
+  "gaps": [],
+  "errors": []
+}
