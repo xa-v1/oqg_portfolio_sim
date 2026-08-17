@@ -43,6 +43,10 @@ class DailyCycleTest(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self.db_path = Path(self._tmp.name) / "ledger.sqlite"
+        # Every run_daily_cycle call below passes this explicitly -- without
+        # it, export_site_data defaults to the real repo's docs/data and
+        # tests would pollute it with test-fixture JSON.
+        self.site_dir = Path(self._tmp.name) / "site"
         ledger.bootstrap_schema(self.db_path)
 
     def tearDown(self) -> None:
@@ -56,7 +60,7 @@ class DailyCycleTest(unittest.TestCase):
 
     def test_skips_non_trading_day_without_writing_a_run_row(self) -> None:
         outcome = run_daily_cycle(
-            self.db_path, [], today=date(2026, 7, 18))  # Saturday
+            self.db_path, [], today=date(2026, 7, 18), site_output_dir=self.site_dir)  # Saturday
 
         self.assertTrue(outcome.skipped)
         self.assertIn("not a", outcome.reason)
@@ -65,7 +69,7 @@ class DailyCycleTest(unittest.TestCase):
     def test_real_default_registry_completes_on_a_real_historical_date(self) -> None:
         # 2026-07-20 is covered by the committed parquet -- no network call needed.
         outcome = run_daily_cycle(
-            self.db_path, default_registry(), today=date(2026, 7, 20))
+            self.db_path, default_registry(), today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         self.assertFalse(outcome.skipped)
         self.assertEqual(outcome.fill_date, date(2026, 7, 20))
@@ -75,10 +79,10 @@ class DailyCycleTest(unittest.TestCase):
 
     def test_is_idempotent_on_repeated_invocation(self) -> None:
         registry = [_registration("flat", _FlatStrategy())]
-        run_daily_cycle(self.db_path, registry, today=date(2026, 7, 20))
+        run_daily_cycle(self.db_path, registry, today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         outcome2 = run_daily_cycle(
-            self.db_path, registry, today=date(2026, 7, 20))
+            self.db_path, registry, today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         self.assertTrue(outcome2.skipped)
         self.assertIn("already completed", outcome2.reason)
@@ -88,7 +92,7 @@ class DailyCycleTest(unittest.TestCase):
         registry = [_registration("boom", _FailingStrategy())]
 
         with self.assertRaises(RunnerError):
-            run_daily_cycle(self.db_path, registry, today=date(2026, 7, 20))
+            run_daily_cycle(self.db_path, registry, today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         self.assertEqual(self._runs(), [("2026-07-20", "error", "error")])
 
@@ -96,11 +100,11 @@ class DailyCycleTest(unittest.TestCase):
         failing_registry = [_registration("s1", _FailingStrategy())]
         with self.assertRaises(RunnerError):
             run_daily_cycle(self.db_path, failing_registry,
-                             today=date(2026, 7, 20))
+                             today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         working_registry = [_registration("s1", _FlatStrategy())]
         outcome = run_daily_cycle(
-            self.db_path, working_registry, today=date(2026, 7, 20))
+            self.db_path, working_registry, today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         self.assertFalse(outcome.skipped)
         statuses = [row[1] for row in self._runs()]
@@ -113,7 +117,7 @@ class DailyCycleTest(unittest.TestCase):
         ]
 
         with self.assertRaises(RunnerError):
-            run_daily_cycle(self.db_path, registry, today=date(2026, 7, 20))
+            run_daily_cycle(self.db_path, registry, today=date(2026, 7, 20), site_output_dir=self.site_dir)
 
         with sqlite3.connect(self.db_path) as conn:
             row = conn.execute(

@@ -13,10 +13,9 @@ never from in-memory/process state, so re-invoking for an already-completed
 date is a safe no-op, and a previously-errored date is safe to retry.
 
 Not handled here (deliberately out of scope for the engine/runner split):
-- Committing the ledger to git -- that's a step in the GH Actions workflow
-  YAML, run with the CI bot's own credentials, not something this Python
-  process does.
-- Regenerating JSON for the website -- there is no website yet (Phase 6).
+- Committing the ledger (and the regenerated site JSON) to git -- that's a
+  step in the GH Actions workflow YAML, run with the CI bot's own
+  credentials, not something this Python process does.
 """
 
 from __future__ import annotations
@@ -38,6 +37,7 @@ from oqg_portfolio_sim.ingestion import (
     refresh_history,
 )
 from oqg_portfolio_sim.strategies.contracts import PricePanel, merge_panels
+from oqg_portfolio_sim.webexport import export_site_data
 
 from .calendar import DEFAULT_CALENDAR, is_trading_day, previous_session
 from .registry import StrategyRegistration, default_registry
@@ -101,10 +101,15 @@ def run_daily_cycle(
     *,
     today: date | None = None,
     calendar_name: str = DEFAULT_CALENDAR,
+    site_output_dir: str | Path | None = None,
 ) -> RunOutcome:
     """Runs one daily cycle. Raises RunnerError if any strategy's step fails
     or fails to reconcile -- the run row is still written with status='error'
     before raising, so the failure is visible in the ledger, not just in logs.
+
+    `site_output_dir` is passed through to export_site_data; leave it None
+    in production (defaults to docs/data) and pass a temp path in tests, so
+    tests never write into the real repo's site data as a side effect.
     """
 
     registry = registry if registry is not None else default_registry()
@@ -195,9 +200,25 @@ def run_daily_cycle(
         notes=note_text, reconciliation_note=note_text,
     )
 
+    # Regenerate the site's JSON regardless of outcome -- a gap/error run
+    # needs to show up on the public site just as much as a clean one does.
+    # This is a separate concern from simulation correctness: the `runs` row
+    # above already reflects the simulation's own status, and an export
+    # failure never rewrites it -- it only additionally surfaces as its own
+    # RunnerError below, since a stale/broken public site is also worth
+    # failing the workflow and getting notified about.
+    export_error: str | None = None
+    try:
+        export_site_data(db_path, site_output_dir)
+    except Exception as exc:
+        export_error = str(exc)
+
     if not all_ok:
         raise RunnerError(
             f"daily cycle failed for {fill_date} (run_id={run_id}): {note_text}")
+    if export_error:
+        raise RunnerError(
+            f"site export failed after a successful run_id={run_id}: {export_error}")
 
     return RunOutcome(
         skipped=False, run_id=run_id, fill_date=fill_date, signal_date=signal_date,

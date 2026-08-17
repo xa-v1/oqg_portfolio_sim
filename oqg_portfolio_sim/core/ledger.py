@@ -385,6 +385,94 @@ def get_all_fills(db_path: str | Path, strategy_id: str) -> list[tuple[str, floa
     return [(instrument_id, qty) for instrument_id, qty in rows]
 
 
+def list_strategies(db_path: str | Path) -> list[dict]:
+    """All registered strategies (active or not)."""
+
+    target_path = Path(db_path).expanduser()
+    with closing(sqlite3.connect(target_path)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT strategy_id, name, description, owner, active, asset_class "
+            "FROM strategies ORDER BY strategy_id"
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_equity_curve(db_path: str | Path, strategy_id: str) -> list[dict]:
+    """Daily equity marks for a strategy, oldest first.
+
+    Only pulls from runs with status='completed' AND reconciliation_status='ok'
+    -- per PROJECT_SPEC.md, "never publish a run that failed reconciliation."
+    """
+
+    target_path = Path(db_path).expanduser()
+    with closing(sqlite3.connect(target_path)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """
+            SELECT runs.as_of_date AS date, equity.gross_pnl, equity.net_pnl,
+                   equity.cum_net_pnl, equity.capital_base, equity.margin_used
+            FROM equity
+            JOIN runs ON runs.run_id = equity.run_id
+            WHERE equity.strategy_id = ?
+              AND runs.status = 'completed'
+              AND runs.reconciliation_status = 'ok'
+            ORDER BY runs.as_of_date
+            """,
+            (strategy_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_trade_log(db_path: str | Path, strategy_id: str) -> list[dict]:
+    """Every fill for a strategy, oldest first, from reconciled/completed runs only."""
+
+    target_path = Path(db_path).expanduser()
+    with closing(sqlite3.connect(target_path)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """
+            SELECT runs.as_of_date AS date, fills.instrument_id, fills.qty,
+                   fills.fill_price, fills.explicit_cost, fills.implicit_cost,
+                   fills.fill_confidence, fills.reason
+            FROM fills
+            JOIN runs ON runs.run_id = fills.run_id
+            WHERE fills.strategy_id = ?
+              AND runs.status = 'completed'
+              AND runs.reconciliation_status = 'ok'
+            ORDER BY runs.as_of_date, fills.fill_id
+            """,
+            (strategy_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def list_completed_run_dates(db_path: str | Path) -> list[str]:
+    """as_of_date for every completed, reconciled run, oldest first."""
+
+    target_path = Path(db_path).expanduser()
+    with closing(sqlite3.connect(target_path)) as conn:
+        rows = conn.execute(
+            "SELECT as_of_date FROM runs WHERE status = 'completed' "
+            "AND reconciliation_status = 'ok' ORDER BY as_of_date"
+        ).fetchall()
+    return [row[0] for row in rows]
+
+
+def list_all_runs(db_path: str | Path) -> list[dict]:
+    """Every run ever recorded (including errors), oldest first -- the raw
+    material for rendering gaps/failures, not just successes."""
+
+    target_path = Path(db_path).expanduser()
+    with closing(sqlite3.connect(target_path)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT run_id, as_of_date, status, reconciliation_status, notes "
+            "FROM runs ORDER BY as_of_date"
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def is_date_completed(db_path: str | Path, as_of_date: str) -> bool:
     """True if `as_of_date` already has a completed run.
 

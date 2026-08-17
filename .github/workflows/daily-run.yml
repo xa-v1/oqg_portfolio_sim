@@ -36,20 +36,23 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run daily simulation cycle
+        # Also regenerates docs/data/*.json (the website's read-only data
+        # source) as its last step, on both success and failure -- see
+        # runner/daily_cycle.py.
         run: python -m oqg_portfolio_sim.runner --db ledger.sqlite
 
-      - name: Commit ledger
+      - name: Commit ledger and site data
         # Runs even if the step above failed: PROJECT_SPEC.md requires that
         # a failed run still gets recorded (status='error') and committed,
         # not silently dropped, so gaps/failures are visible in the public
-        # track record rather than just in CI logs.
+        # track record (and on the site) rather than just in CI logs.
         if: always()
         run: |
           git config user.name "oqg-simulator-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add ledger.sqlite
+          git add ledger.sqlite docs/data
           if git diff --cached --quiet; then
-            echo "No ledger changes to commit"
+            echo "No ledger/site changes to commit"
           else
             git commit -m "Daily simulation run: $(date -u +%Y-%m-%d)"
             git push

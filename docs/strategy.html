@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strategy — OQG Portfolio Simulator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="honesty-banner">
+  <div class="inner">
+    <strong>⚠ Simulated paper trading — not real, not investable, for education only.</strong>
+    <span class="assumptions">Prices are delayed end-of-day data. Fills are modeled (assumed spread, next-session execution), never real broker fills.</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <a class="back-link" href="index.html">← All strategies</a>
+
+  <header class="site-header" id="strategy-header">
+    <h1 class="loading">Loading…</h1>
+  </header>
+
+  <div id="stat-row" class="stat-row"></div>
+
+  <div class="chart-card">
+    <h2>Cumulative net P&amp;L</h2>
+    <p class="sub">After explicit + implicit costs. Breaks in the line mark missed or failed sessions — see below.</p>
+    <div class="chart-canvas-wrap">
+      <canvas id="equity-chart"></canvas>
+    </div>
+  </div>
+
+  <div id="notice-container"></div>
+
+  <h2>Trade log</h2>
+  <p class="sub" style="color: var(--text-muted); margin-top: -8px;">Newest first. A low-confidence badge means this instrument is flagged illiquid — treat the modeled fill price as less reliable.</p>
+  <div class="table-scroll">
+    <table class="trades" id="trades-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Instrument</th>
+          <th class="num">Qty</th>
+          <th class="num">Fill price</th>
+          <th class="num">Explicit cost</th>
+          <th class="num">Implicit cost</th>
+          <th>Confidence</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody id="trades-body">
+        <tr><td colspan="8" class="loading">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="site-footer">
+    <p>Source: <a href="https://github.com/xa-v1/oqg_portfolio_sim">github.com/xa-v1/oqg_portfolio_sim</a>. Margin figures are an approximation, not a broker margin calculation.</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="js/common.js"></script>
+<script src="js/strategy.js"></script>
+</body>
+</html>

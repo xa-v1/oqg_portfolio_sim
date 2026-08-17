@@ -24,16 +24,22 @@ def main() -> int:
         help="Process this date instead of today (YYYY-MM-DD). For manual "
              "backfill/testing only -- the normal cron invocation omits this.",
     )
+    parser.add_argument(
+        "--site-dir", default=None,
+        help="Where to write the website's JSON (default: docs/data). "
+             "Override for local testing so you don't touch the real site data.",
+    )
     args = parser.parse_args()
 
     db_path = Path(args.db).expanduser()
+    site_dir = Path(args.site_dir).expanduser() if args.site_dir else None
     today = None
     if args.as_of:
         from datetime import date
         today = date.fromisoformat(args.as_of)
 
     try:
-        outcome = run_daily_cycle(db_path, today=today)
+        outcome = run_daily_cycle(db_path, today=today, site_output_dir=site_dir)
     except RunnerError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

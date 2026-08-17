@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OQG Portfolio Simulator — Track Record</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="honesty-banner">
+  <div class="inner">
+    <strong>⚠ Simulated paper trading — not real, not investable, for education only.</strong>
+    <span class="assumptions">Prices are delayed end-of-day data. Fills are modeled (assumed spread, next-session execution), never real broker fills.</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="site-header">
+    <h1>OQG Portfolio Simulator</h1>
+    <p>A quant club's strategies, run forward against real market data with a fake capital base. Every number below comes from the append-only ledger this site reads — nothing is hand-edited.</p>
+  </header>
+
+  <div id="leaderboard-container">
+    <p class="loading">Loading track record…</p>
+  </div>
+
+  <div id="notice-container"></div>
+
+  <footer class="site-footer">
+    <p>Source: <a href="https://github.com/xa-v1/oqg_portfolio_sim">github.com/xa-v1/oqg_portfolio_sim</a>. Data regenerated daily from the SQLite ledger; see <code>docs/data/index.json</code> for the raw feed.</p>
+  </footer>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>
