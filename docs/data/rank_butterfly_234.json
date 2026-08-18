@@ -7,12 +7,12 @@
   "active": true,
   "capital_base": 100000.0,
   "stats": {
-    "net_return_pct": 0.0,
-    "sharpe_like": null,
-    "max_drawdown_dollars": 0.0,
-    "max_drawdown_pct": 0.0,
+    "net_return_pct": -0.2103,
+    "sharpe_like": -15.8745,
+    "max_drawdown_dollars": -210.32,
+    "max_drawdown_pct": -0.2103,
     "win_rate": 0.0,
-    "days_tracked": 1
+    "days_tracked": 2
   },
   "equity_curve": [
     {
@@ -22,9 +22,48 @@
       "cum_net_pnl": 0.0,
       "capital_base": 100000.0,
       "margin_used": 0.0
+    },
+    {
+      "date": "2026-08-18",
+      "gross_pnl": 0.0,
+      "net_pnl": -210.32,
+      "cum_net_pnl": -210.32,
+      "capital_base": 100000.0,
+      "margin_used": 3390.0
     }
   ],
-  "trades": [],
+  "trades": [
+    {
+      "date": "2026-08-18",
+      "instrument_id": "VX4",
+      "qty": 1.0,
+      "fill_price": 20.3678,
+      "explicit_cost": 2.58,
+      "implicit_cost": 50.0,
+      "fill_confidence": "low",
+      "reason": "rank-butterfly z-score, pos=-1"
+    },
+    {
+      "date": "2026-08-18",
+      "instrument_id": "VX3",
+      "qty": -2.0,
+      "fill_price": 19.7247,
+      "explicit_cost": 5.16,
+      "implicit_cost": 100.0,
+      "fill_confidence": "normal",
+      "reason": "rank-butterfly z-score, pos=-1"
+    },
+    {
+      "date": "2026-08-18",
+      "instrument_id": "VX2",
+      "qty": 1.0,
+      "fill_price": 18.1906,
+      "explicit_cost": 2.58,
+      "implicit_cost": 50.0,
+      "fill_confidence": "normal",
+      "reason": "rank-butterfly z-score, pos=-1"
+    }
+  ],
   "gaps": [],
   "errors": []
 }
