@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-24T21:50:06+00:00",
+  "generated_at": "2026-08-25T21:49:58+00:00",
   "strategies": [
     {
       "strategy_id": "rank_butterfly_234",
@@ -8,9 +8,9 @@
       "asset_class": "futures",
       "active": true,
       "capital_base": 100000.0,
-      "cum_net_pnl": 139.87999999999732,
-      "net_return_pct": 0.1399,
-      "last_date": "2026-08-24"
+      "cum_net_pnl": 63.88000000000392,
+      "net_return_pct": 0.0639,
+      "last_date": "2026-08-25"
     }
   ],
   "gaps": [],
