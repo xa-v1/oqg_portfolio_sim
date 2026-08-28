@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-27T00:54:38+00:00",
+  "generated_at": "2026-08-28T05:30:25+00:00",
   "strategies": [
     {
       "strategy_id": "rank_butterfly_234",
@@ -16,5 +16,7 @@
   "gaps": [
     "2026-08-26"
   ],
-  "errors": []
+  "errors": [
+    "2026-08-28"
+  ]
 }
