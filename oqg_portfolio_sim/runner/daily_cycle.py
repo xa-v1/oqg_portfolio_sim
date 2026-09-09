@@ -32,9 +32,10 @@ from oqg_portfolio_sim.ingestion import (
     StooqSource,
     YFinanceSource,
     build_equity_panel,
-    load_vix_futures_parquet,
+    load_vix_futures_history,
     rank_panel,
     refresh_history,
+    save_vix_futures_history,
 )
 from oqg_portfolio_sim.strategies.contracts import PricePanel, merge_panels
 from oqg_portfolio_sim.webexport import export_site_data
@@ -63,7 +64,10 @@ class RunOutcome:
 
 
 def _build_price_panel(
-    registry: list[StrategyRegistration], through: date, calendar_name: str
+    registry: list[StrategyRegistration],
+    through: date,
+    calendar_name: str,
+    vix_live_path: str | Path | None,
 ) -> tuple[PricePanel, list[str]]:
     warnings: list[str] = []
     needed_asset_classes: dict[str, str] = {}
@@ -74,10 +78,18 @@ def _build_price_panel(
     panels: list[PricePanel] = []
 
     if any(asset_class == "futures" for asset_class in needed_asset_classes.values()):
-        history = load_vix_futures_parquet()
+        # load_vix_futures_history (not load_vix_futures_parquet) picks up
+        # the live-updates file if one exists, so this only has to fetch
+        # what's missing since the LAST successful run, not since the seed
+        # file's fixed 2026-07-20 -- see save_vix_futures_history below.
+        # vix_live_path=None uses the real repo path -- tests MUST override
+        # it, or they'll silently write into the real data/ directory (this
+        # bit the site_output_dir fix too; see test_runner_daily_cycle.py).
+        history = load_vix_futures_history(live_path=vix_live_path)
         history, refresh_warnings = refresh_history(
             history, through, calendar_name=calendar_name)
         warnings.extend(refresh_warnings)
+        save_vix_futures_history(history, live_path=vix_live_path)
         panels.append(rank_panel(history, n_ranks=_VIX_RANK_DEPTH))
 
     equity_ids = sorted(
@@ -102,14 +114,18 @@ def run_daily_cycle(
     today: date | None = None,
     calendar_name: str = DEFAULT_CALENDAR,
     site_output_dir: str | Path | None = None,
+    vix_live_path: str | Path | None = None,
 ) -> RunOutcome:
     """Runs one daily cycle. Raises RunnerError if any strategy's step fails
     or fails to reconcile -- the run row is still written with status='error'
     before raising, so the failure is visible in the ledger, not just in logs.
 
-    `site_output_dir` is passed through to export_site_data; leave it None
-    in production (defaults to docs/data) and pass a temp path in tests, so
-    tests never write into the real repo's site data as a side effect.
+    `site_output_dir` and `vix_live_path` are passed through to
+    export_site_data and the VIX ingestion cache respectively; leave both
+    None in production (they default to docs/data and
+    data/vix_futures_live.parquet) and pass temp paths in tests, so tests
+    never write into the real repo's site data or price-history cache as a
+    side effect.
     """
 
     registry = registry if registry is not None else default_registry()
@@ -139,7 +155,7 @@ def run_daily_cycle(
     try:
         signal_date = previous_session(fill_date, calendar_name)
         panel, ingestion_warnings = _build_price_panel(
-            registry, fill_date, calendar_name)
+            registry, fill_date, calendar_name, vix_live_path)
         if ingestion_warnings:
             strategy_notes["ingestion"] = "; ".join(ingestion_warnings)
 

@@ -29,17 +29,25 @@ def main() -> int:
         help="Where to write the website's JSON (default: docs/data). "
              "Override for local testing so you don't touch the real site data.",
     )
+    parser.add_argument(
+        "--vix-live-path", default=None,
+        help="Where to cache ingested VIX futures history (default: "
+             "data/vix_futures_live.parquet). Override for local testing so "
+             "you don't touch the real price-history cache.",
+    )
     args = parser.parse_args()
 
     db_path = Path(args.db).expanduser()
     site_dir = Path(args.site_dir).expanduser() if args.site_dir else None
+    vix_live_path = Path(args.vix_live_path).expanduser() if args.vix_live_path else None
     today = None
     if args.as_of:
         from datetime import date
         today = date.fromisoformat(args.as_of)
 
     try:
-        outcome = run_daily_cycle(db_path, today=today, site_output_dir=site_dir)
+        outcome = run_daily_cycle(
+            db_path, today=today, site_output_dir=site_dir, vix_live_path=vix_live_path)
     except RunnerError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

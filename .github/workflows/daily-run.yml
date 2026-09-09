@@ -2,15 +2,25 @@ name: Daily Simulation Run
 
 on:
   schedule:
-    # 21:30 UTC ~= 4:30pm ET, after the 4:00pm ET CFE/equity close, leaving
-    # time for Cboe settlement data to post. Does not itself account for
-    # market holidays -- the runner's own market-calendar check (CFE
+    # Primary: 21:30 UTC ~= 4:30pm ET, after the 4:00pm ET CFE/equity close,
+    # leaving time for Cboe settlement data to post. Does not itself account
+    # for market holidays -- the runner's own market-calendar check (CFE
     # calendar) handles that and exits cleanly (not an error) on non-trading
     # days. Note: the UTC offset for 4:30pm ET drifts by an hour across the
     # US DST transition; this cron is tuned for EDT (summer) and will fire
     # ~1 hour early relative to market close during EST (winter) months --
     # still after close, just with a bit more settlement-posting buffer.
     - cron: "30 21 * * 1-5"
+    # Backup, same UTC calendar day: catches a transient same-day failure
+    # (e.g. Cboe hadn't posted settlement data yet at 21:30) or a scheduled
+    # trigger GitHub Actions silently dropped -- both observed for real
+    # during the first soak week. Deliberately kept on the same UTC day:
+    # the runner targets date.today(), so a trigger that slips past
+    # midnight UTC would target the *next* trading day, not retry this one
+    # -- see runner/daily_cycle.py. Idempotent either way (is_date_completed
+    # skips a date that already succeeded), so this is a safe no-op on a
+    # normal day.
+    - cron: "30 23 * * 1-5"
   workflow_dispatch: {}
 
 permissions:
@@ -50,7 +60,7 @@ jobs:
         run: |
           git config user.name "oqg-simulator-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add ledger.sqlite docs/data
+          git add ledger.sqlite docs/data data/vix_futures_live.parquet
           if git diff --cached --quiet; then
             echo "No ledger/site changes to commit"
           else

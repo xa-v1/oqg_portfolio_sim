@@ -29,6 +29,13 @@ from .base import DataSourceError
 _DEFAULT_PARQUET_PATH = (
     Path(__file__).resolve().parents[2] / "data" / "vix_futures_combined.parquet"
 )
+# Growing file the runner writes to after each successful ingestion, kept
+# separate from the seed file above so that original club history stays an
+# untouched, immutable reference (RankButterflyFidelityTest reads it
+# directly) while live-ingested data accumulates elsewhere.
+_LIVE_PARQUET_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "vix_futures_live.parquet"
+)
 _CBOE_SETTLEMENT_URL = "https://www-api.cboe.com/us/futures/market_statistics/settlement/csv"
 # Standard monthly VX contracts only, e.g. "VX/Q6". Excludes weeklies
 # ("VX32/Q6") and other products (VXM minis), which the historical parquet
@@ -60,6 +67,42 @@ def load_vix_futures_parquet(path: str | Path | None = None) -> pd.DataFrame:
         }
     )
     return out.sort_values(["trade_date", "days_to_settlement"]).reset_index(drop=True)
+
+
+def load_vix_futures_history(
+    seed_path: str | Path | None = None,
+    live_path: str | Path | None = None,
+) -> pd.DataFrame:
+    """The full known VIX futures history: the live-updates file if one
+    exists, falling back to the original seed parquet otherwise.
+
+    The live file (when present) is a full self-contained snapshot -- seed
+    data plus everything ingested since -- written by save_vix_futures_history.
+    This is what the daily runner should call, NOT load_vix_futures_parquet
+    directly: reading only the seed file every time is exactly the bug that
+    let the ingestion gap regrow from scratch on every single run (see
+    refresh_history's max_backfill_sessions).
+    """
+
+    live_target = Path(
+        live_path) if live_path is not None else _LIVE_PARQUET_PATH
+    if live_target.exists():
+        raw = pd.read_parquet(live_target)
+        return raw.sort_values(["trade_date", "days_to_settlement"]).reset_index(drop=True)
+    return load_vix_futures_parquet(seed_path)
+
+
+def save_vix_futures_history(history: pd.DataFrame, live_path: str | Path | None = None) -> None:
+    """Persists the full current history so the next run starts from here,
+    not from the seed file's fixed last date. Call this after a successful
+    refresh_history -- skipping it silently reintroduces the regrowing-gap
+    bug this pair of functions exists to fix.
+    """
+
+    live_target = Path(
+        live_path) if live_path is not None else _LIVE_PARQUET_PATH
+    live_target.parent.mkdir(parents=True, exist_ok=True)
+    history[_NORMALIZED_COLUMNS].to_parquet(live_target, index=False)
 
 
 class CboeSettlementSource:

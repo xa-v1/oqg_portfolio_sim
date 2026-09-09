@@ -1,5 +1,7 @@
+import tempfile
 import unittest
-from datetime import date
+from datetime import date, timedelta
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -7,10 +9,12 @@ import pandas as pd
 from oqg_portfolio_sim.ingestion.base import DataSourceError
 from oqg_portfolio_sim.ingestion.vix_futures import (
     CboeSettlementSource,
+    load_vix_futures_history,
     load_vix_futures_parquet,
     merge_settlement_updates,
     rank_panel,
     refresh_history,
+    save_vix_futures_history,
 )
 
 
@@ -44,6 +48,83 @@ class LoadVixFuturesParquetTest(unittest.TestCase):
     def test_raises_when_file_missing(self) -> None:
         with self.assertRaises(DataSourceError):
             load_vix_futures_parquet("/nonexistent/path.parquet")
+
+
+class VixFuturesHistoryPersistenceTest(unittest.TestCase):
+    """Regression coverage for the soak-week bug: refresh_history's merged
+    data was never written back to disk, so every run re-fetched the whole
+    gap from the seed file's fixed last date, growing by one session a day
+    until it permanently exceeded max_backfill_sessions."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.live_path = Path(self._tmp.name) / "live.parquet"
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_load_falls_back_to_seed_when_no_live_file_exists(self) -> None:
+        history = load_vix_futures_history(live_path=self.live_path)
+        seed = load_vix_futures_parquet()
+        self.assertTrue(history.equals(seed))
+
+    def test_save_then_load_round_trips_exactly(self) -> None:
+        history = pd.DataFrame(
+            [_contract_row(date(2026, 1, 1), "VX/F6",
+                            15.0, date(2026, 1, 21), 20)]
+        )
+
+        save_vix_futures_history(history, live_path=self.live_path)
+        reloaded = load_vix_futures_history(live_path=self.live_path)
+
+        self.assertEqual(len(reloaded), 1)
+        self.assertEqual(reloaded.iloc[0]["trade_date"], date(2026, 1, 1))
+        self.assertEqual(reloaded.iloc[0]["settle"], 15.0)
+
+    def test_second_run_only_fetches_the_new_gap_not_the_whole_history(self) -> None:
+        # Simulates two consecutive daily runs against a fake seed history
+        # that's already 40 sessions stale (over the default cap of 30).
+        seed_last_date = date(2026, 1, 1)
+        seed = pd.DataFrame(
+            [_contract_row(seed_last_date, "VX/F6",
+                            15.0, date(2026, 3, 1), 59)]
+        )
+
+        source = MagicMock()
+        source.fetch_settlement.side_effect = lambda trade_date: pd.DataFrame(
+            [_contract_row(trade_date, "VX/F6", 15.5,
+                            date(2026, 3, 1), (date(2026, 3, 1) - trade_date).days)]
+        )
+
+        far_future = seed_last_date + timedelta(days=60)  # ~40 trading sessions out
+
+        # Run 1: gap from the stale seed exceeds the cap -> must raise,
+        # exactly like the real production failure.
+        with self.assertRaises(DataSourceError):
+            refresh_history(seed, far_future, source=source,
+                             max_backfill_sessions=30)
+
+        # Now simulate a run that HAD already saved a caught-up history
+        # (as save_vix_futures_history would after a prior success) close
+        # to far_future -- the next day's run should only need to fetch
+        # ONE new session, never re-walking the original 40-session gap.
+        caught_up = pd.DataFrame(
+            [_contract_row(far_future - timedelta(days=3), "VX/F6",
+                            15.9, date(2026, 3, 1), 1)]
+        )
+        save_vix_futures_history(caught_up, live_path=self.live_path)
+        reloaded = load_vix_futures_history(live_path=self.live_path)
+
+        next_day = far_future - timedelta(days=2)
+        source.fetch_settlement.reset_mock()
+        updated, warnings = refresh_history(
+            reloaded, next_day, source=source, max_backfill_sessions=30)
+
+        # The exact count depends on where weekends fall, but the whole
+        # point of the fix is that it's a handful, not the ~40 sessions
+        # the original (unpersisted) gap would have required.
+        self.assertLessEqual(source.fetch_settlement.call_count, 3)
+        self.assertEqual(warnings, [])
 
 
 class CboeSettlementSourceTest(unittest.TestCase):
