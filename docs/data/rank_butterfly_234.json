@@ -7,12 +7,12 @@
   "active": true,
   "capital_base": 100000.0,
   "stats": {
-    "net_return_pct": 0.1546,
-    "sharpe_like": 1.3386,
+    "net_return_pct": 0.1233,
+    "sharpe_like": 1.0224,
     "max_drawdown_dollars": -309.0,
     "max_drawdown_pct": -0.309,
-    "win_rate": 0.25,
-    "days_tracked": 12
+    "win_rate": 0.2308,
+    "days_tracked": 13
   },
   "equity_curve": [
     {
@@ -108,6 +108,14 @@
       "gross_pnl": 117.30000000000021,
       "net_pnl": 117.30000000000021,
       "cum_net_pnl": 154.58000000000212,
+      "capital_base": 100000.0,
+      "margin_used": 3390.0
+    },
+    {
+      "date": "2026-09-14",
+      "gross_pnl": -31.299999999998192,
+      "net_pnl": -31.299999999998192,
+      "cum_net_pnl": 123.28000000000392,
       "capital_base": 100000.0,
       "margin_used": 3390.0
     }
