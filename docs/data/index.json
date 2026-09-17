@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-16T01:34:42+00:00",
+  "generated_at": "2026-09-17T01:39:01+00:00",
   "strategies": [
     {
       "strategy_id": "rank_butterfly_234",
@@ -10,7 +10,7 @@
       "capital_base": 100000.0,
       "cum_net_pnl": 785.9599999999945,
       "net_return_pct": 0.786,
-      "last_date": "2026-09-16"
+      "last_date": "2026-09-17"
     },
     {
       "strategy_id": "spy_ma_breakout_canary",
@@ -21,7 +21,7 @@
       "capital_base": 25000.0,
       "cum_net_pnl": 0.0,
       "net_return_pct": 0.0,
-      "last_date": "2026-09-16"
+      "last_date": "2026-09-17"
     }
   ],
   "gaps": [
