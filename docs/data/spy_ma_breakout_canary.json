@@ -12,7 +12,7 @@
     "max_drawdown_dollars": 0.0,
     "max_drawdown_pct": 0.0,
     "win_rate": 0.0,
-    "days_tracked": 8
+    "days_tracked": 9
   },
   "equity_curve": [
     {
@@ -78,12 +78,21 @@
       "cum_net_pnl": 0.0,
       "capital_base": 25000.0,
       "margin_used": 0.0
+    },
+    {
+      "date": "2026-09-22",
+      "gross_pnl": 0.0,
+      "net_pnl": 0.0,
+      "cum_net_pnl": 0.0,
+      "capital_base": 25000.0,
+      "margin_used": 0.0
     }
   ],
   "trades": [],
   "gaps": [
     "2026-08-26",
-    "2026-08-31"
+    "2026-08-31",
+    "2026-09-21"
   ],
   "errors": [
     "2026-08-28",
