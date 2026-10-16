@@ -7,12 +7,12 @@
   "active": true,
   "capital_base": 100000.0,
   "stats": {
-    "net_return_pct": 0.5705,
-    "sharpe_like": 1.7482,
-    "max_drawdown_dollars": -318.12,
-    "max_drawdown_pct": -0.3181,
-    "win_rate": 0.2812,
-    "days_tracked": 32
+    "net_return_pct": 0.2737,
+    "sharpe_like": 0.7823,
+    "max_drawdown_dollars": -512.24,
+    "max_drawdown_pct": -0.5122,
+    "win_rate": 0.2727,
+    "days_tracked": 33
   },
   "equity_curve": [
     {
@@ -270,9 +270,47 @@
       "cum_net_pnl": 570.5399999999956,
       "capital_base": 100000.0,
       "margin_used": 3390.0
+    },
+    {
+      "date": "2026-10-16",
+      "gross_pnl": -86.50000000000446,
+      "net_pnl": -296.8200000000045,
+      "cum_net_pnl": 273.71999999999116,
+      "capital_base": 100000.0,
+      "margin_used": 0.0
     }
   ],
   "trades": [
+    {
+      "date": "2026-10-16",
+      "instrument_id": "VX4",
+      "qty": 1.0,
+      "fill_price": 19.175,
+      "explicit_cost": 2.58,
+      "implicit_cost": 50.0,
+      "fill_confidence": "low",
+      "reason": "target flat (exit)"
+    },
+    {
+      "date": "2026-10-16",
+      "instrument_id": "VX3",
+      "qty": -2.0,
+      "fill_price": 18.25,
+      "explicit_cost": 5.16,
+      "implicit_cost": 100.0,
+      "fill_confidence": "normal",
+      "reason": "target flat (exit)"
+    },
+    {
+      "date": "2026-10-16",
+      "instrument_id": "VX2",
+      "qty": 1.0,
+      "fill_price": 17.9231,
+      "explicit_cost": 2.58,
+      "implicit_cost": 50.0,
+      "fill_confidence": "normal",
+      "reason": "target flat (exit)"
+    },
     {
       "date": "2026-09-18",
       "instrument_id": "VX4",
